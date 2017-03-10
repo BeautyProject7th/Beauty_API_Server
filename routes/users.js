@@ -127,16 +127,6 @@ router.get('/:user_id/cosmetics/:cosmetic_id', function(req, res, next) {
 	});
 });
 
-router.put('/:user_id/cosmetics/:cosmetic_id', function(req, res, next) {
-	var query = 'update dressing_table set rate_num=?, review=?, status=? where user_id = ? and cosmetic_id = ?;';
-	var query_params = [ req.body.rate_num, req.body.review, req.body.status, req.params.user_id, req.params.cosmetic_id ];
-    connection.query(query, query_params, function (error, info) {
-        if (error == null){
-            res.send("success");
-        } else res.status(503).json(error);
-    });
-});
-
 router.get('/images/:filename', function(req, res) {
 	var filename = req.params.filename;
 	var img = fs.readFileSync('./public/images/users/' + filename);

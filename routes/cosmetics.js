@@ -12,7 +12,6 @@ var connection = mysql.createConnection({
     host : '13.112.190.217'
 });
 
-
 router.get('/', function(req, res, next) {
 	//*예외처리 : req.query.page없을 경우!
 	
@@ -49,7 +48,6 @@ router.get('/', function(req, res, next) {
 		} else res.json([]);//res.status(503).json(error);
     });
 });
-
 
 router.get('/:cosmetic_id', function(req, res, next) {
 	connection.query("select * from cosmetic where id = ?",[req.params.cosmetic_id], function (error, cursor) {
