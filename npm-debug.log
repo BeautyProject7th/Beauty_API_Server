@@ -7,7 +7,7 @@
 6 silly lifecycle beautyproject@0.0.0~prestart: no script for prestart, continuing
 7 info lifecycle beautyproject@0.0.0~start: beautyproject@0.0.0
 8 verbose lifecycle beautyproject@0.0.0~start: unsafe-perm in lifecycle true
-9 verbose lifecycle beautyproject@0.0.0~start: PATH: /usr/local/lib/node_modules/npm/bin/node-gyp-bin:/home/ec2-user/mijeong/node/BeautyProject/node_modules/.bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/opt/aws/bin:/home/ec2-user/.local/bin:/home/ec2-user/bin
+9 verbose lifecycle beautyproject@0.0.0~start: PATH: /usr/local/lib/node_modules/npm/bin/node-gyp-bin:/home/ec2-user/mijeong/node/BeautyProject/node_modules/.bin:/home/ec2-user/.pyenv/plugins/pyenv-virtualenv/shims:/home/ec2-user/.pyenv/shims:/home/ec2-user/.pyenv/bin:/home/ec2-user/.pyenv/plugins/pyenv-virtualenv/shims:/home/ec2-user/.pyenv/shims:/home/ec2-user/.pyenv/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/opt/aws/bin:/home/ec2-user/.local/bin:/home/ec2-user/bin
 10 verbose lifecycle beautyproject@0.0.0~start: CWD: /home/ec2-user/mijeong/node/BeautyProject
 11 silly lifecycle beautyproject@0.0.0~start: Args: [ '-c', 'node ./bin/www' ]
 12 silly lifecycle beautyproject@0.0.0~start: Returned: code: 1  signal: null

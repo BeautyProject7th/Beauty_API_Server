@@ -8,6 +8,7 @@ var bodyParser = require('body-parser');
 var category = require('./routes/category');
 var brand = require('./routes/brand');
 var users = require('./routes/users');
+var cosmetics = require('./routes/cosmetics');
 
 var app = express();
 
@@ -26,13 +27,19 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/category', category);
 app.use('/brand', brand);
 app.use('/users', users);
+app.use('/cosmetics', cosmetics);
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+app.use('/swagger-ui', express.static(path.join(__dirname, './node_modules/swagger-ui/dist')));
+app.use('/v1/swagger.json', function(req, res) {
+  res.json(require('./swagger.json'));
 });
+app.use('/swagger', function (req, res) {
+  res.redirect('/swagger-ui?url=/v1/swagger.json');
+});
+/*
+	http://13.112.190.217:8888/swagger-ui/?url=/v1/swagger.json
+	위로 접속하면 rest api 쉽게 볼 수 있어용(테스트도 가능)
+*/
 
 // error handler
 app.use(function(err, req, res, next) {
@@ -46,3 +53,7 @@ app.use(function(err, req, res, next) {
 });
 
 module.exports = app;
+
+app.listen(8888);
+
+console.log("port 8888 server running....");

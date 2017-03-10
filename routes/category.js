@@ -1,3 +1,4 @@
+const message = require('../message');
 var express = require('express');
 var mysql = require('mysql');
 var router = express.Router();
@@ -11,6 +12,8 @@ var connection = mysql.createConnection({
 
 router.get('/', function(req, res, next) {
 	connection.query('select * from category;', function (error, cursor) {
+		if (error) res.status(message.code(11)).json(message.json(11));
+		
 		if (cursor.length > 0) {
 			var results = [];
 			var before_main = null;
@@ -27,8 +30,8 @@ router.get('/', function(req, res, next) {
 				before_main = item.main_category;
 			});
 			results.push(object);
-			res.json(results);
-		} else res.status(503).json(error);
+			res.status(message.code(0)).json(results);
+		} else res.status(message.code(2)).json(message.json(2));
     });
 });
 
