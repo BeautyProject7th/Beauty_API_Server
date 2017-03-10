@@ -11,7 +11,8 @@ const message = [
   'not found', // 9 - 404
   'Conflict. Already exists', // 10 - 409
   'Internal server error',  // 11 - 500
-  'Service unavailable'  // 12 - 503
+  'Service unavailable',  // 12 - 503
+  'Bad request. invalid body' // 13 - 400
  ];
 
 const code = [
@@ -27,7 +28,8 @@ const code = [
   404, // 9
   409, // 10
   500, // 11
-  503 // 12
+  503, // 12
+  400 // 13
 ];
 
 exports.code = function (num) {
@@ -35,7 +37,7 @@ exports.code = function (num) {
 };
 
 exports.json = function (num, err) {
-  const json = { code: num, message: message[num] };
+  const json = { code: code[num], message: message[num] };
   if (num == 1)
     json.err = err;
   return json;

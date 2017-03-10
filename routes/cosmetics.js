@@ -29,30 +29,45 @@ router.get('/', function(req, res, next) {
 		else query += " where"
 		query += " main_category = ?";
 		query_params.push(req.query.main);
-		if(req.query.sub){
-			query += " and sub_category = ?";
-			query_params.push(req.query.sub);
+	}
+	if(req.query.sub){
+	    if(!req.query.main){
+		    res.status(message.code(6)).json(message.json(6)); return;
 		}
+		query += " and sub_category = ?";
+		query_params.push(req.query.sub);
+	}
+	if(req.query.page){
 		query += " limit ?,12";
 		//page 시작 0 부터로 해놓았는데 오빠가 1부터가 편하다고 하시면 req.query.page-1로 변경할 것
 		query_params.push(req.query.page*12);
+	}else{
+		res.status(message.code(4)).json(message.json(4)); return;
 	}
-	console.log(query);
-	connection.query(query,query_params, function (error, cursor) {
-		if(cursor == null){
-			return res.json([]);
-		}
+	
+	connection.query(query, query_params, function (error, cursor) {
+		if (error){
+            res.status(message.code(11)).json(message.json(11)); return;
+        }
 
 		if (cursor.length > 0) {
-			res.json(cursor);
-		} else res.json([]);//res.status(503).json(error);
+			res.status(message.code(0)).json(cursor);
+		} else res.status(message.code(2)).json(message.json(2));
     });
 });
 
 router.get('/:cosmetic_id', function(req, res, next) {
+	if(req.params.cosmetic_id.length == 0){
+		res.status(message.code(4)).json(message.json(4)); return;
+	}	
+	
 	connection.query("select * from cosmetic where id = ?",[req.params.cosmetic_id], function (error, cursor) {
+		if (error){
+            res.status(message.code(11)).json(message.json(11)); return;
+        }
+        
 		if (cursor.length > 0) {
-			res.json(cursor[0]);
+			res.status(message.code(0)).json(cursor[0]);
 		} else res.status(message.code(2)).json(message.json(2));
     });
 });
