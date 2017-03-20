@@ -31,7 +31,7 @@ router.get('/', function(req, res, next) {
 			});
 			results.push(object);
 			res.status(message.code(0)).json(results);
-		} else res.status(message.code(2)).json(message.json(2));
+		} else res.status(message.code(9)).json(message.json(9));
     });
 });
 

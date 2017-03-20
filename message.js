@@ -12,7 +12,8 @@ const message = [
   'Conflict. Already exists', // 10 - 409
   'Internal server error',  // 11 - 500
   'Service unavailable',  // 12 - 503
-  'Bad request. invalid body' // 13 - 400
+  'Bad request. invalid body', // 13 - 400
+  'Not connet to redis' // 14 - 500
  ];
 
 const code = [
@@ -29,7 +30,8 @@ const code = [
   409, // 10
   500, // 11
   503, // 12
-  400 // 13
+  400, // 13
+  500 //14
 ];
 
 exports.code = function (num) {

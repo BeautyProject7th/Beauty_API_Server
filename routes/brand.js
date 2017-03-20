@@ -16,7 +16,7 @@ router.get('/', function(req, res, next) {
 		
 		if (cursor.length > 0) {
 			res.status(message.code(0)).json(cursor);
-		} else res.status(message.code(2)).json(message.json(2));
+		} else res.status(message.code(9)).json(message.json(9));
     });
 });
 

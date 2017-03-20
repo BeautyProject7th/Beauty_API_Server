@@ -4,6 +4,10 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var session = require('express-session');
+var RedisStore = require('connect-redis')(session);
+//지금은 직접 켜야지만 가능 -> redis켜는법(필요할때만) 찾아볼 것
+var redis = require('redis').createClient(6379,'localhost');
 
 var category = require('./routes/category');
 var brand = require('./routes/brand');
@@ -18,6 +22,21 @@ app.set('view engine', 'jade');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+app.use(session({
+	store: new RedisStore({
+        host: "localhost",
+        port: 6379,
+        client: redis,
+        prefix : "session:",
+        db : 0,
+        resave : false
+    }),
+    secret: 'thakqbxl7',
+    cookie: {
+        maxAge: 1000 * 60 * 60 * 24 * 365 // 쿠키 1년 유지
+    }
+}));
+
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));

@@ -40,9 +40,9 @@ router.get('/', function(req, res, next) {
 	if(req.query.page){
 		query += " limit ?,12";
 		//page 시작 0 부터로 해놓았는데 오빠가 1부터가 편하다고 하시면 req.query.page-1로 변경할 것
-		query_params.push(req.query.page*12);
+		query_params.push((req.query.page-1)*12);
 	}else{
-		res.status(message.code(4)).json(message.json(4)); return;
+		res.status(message.code(5)).json(message.json(5)); return;
 	}
 	
 	connection.query(query, query_params, function (error, cursor) {
@@ -52,7 +52,7 @@ router.get('/', function(req, res, next) {
 
 		if (cursor.length > 0) {
 			res.status(message.code(0)).json(cursor);
-		} else res.status(message.code(2)).json(message.json(2));
+		} else res.status(message.code(9)).json(message.json(9));
     });
 });
 
@@ -68,7 +68,7 @@ router.get('/:cosmetic_id', function(req, res, next) {
         
 		if (cursor.length > 0) {
 			res.status(message.code(0)).json(cursor[0]);
-		} else res.status(message.code(2)).json(message.json(2));
+		} else res.status(message.code(9)).json(message.json(9));
     });
 });
 

@@ -11,13 +11,48 @@ var connection = mysql.createConnection({
     host : '13.112.190.217'
 });
 
+router.post('/login', function(req, res, next){	
+	if (!req.session) {
+	    console.log('not connect session') // handle error 
+	    res.status(message.code(14)).json(message.json(14)); return;
+	}
+	if(req.body.id.length == 0 || req.body.name.length == 0 || req.body.social_type == 0){
+		res.status(message.code(13)).json(message.json(13)); return;
+	}
+	
+	var query = 'insert into user(id, name, profile_url,social_type) values (?,?,?,?);';
+	var query_params = [req.body.id,req.body.name,req.body.profile_url,req.body.social_type];
+	console.log(query_params);
+	
+	//우선 회원 가입(post) 
+	connection.query(query, query_params, function (error, info) {
+		if(error) console.log("기존 회원");
+		else console.log("새로운 회원");
+		
+		req.session.key = req.body.id;
+		console.log("id : "+req.session.key);
+		res.redirect('/users/'+req.body.id);
+		//redirect하게되면 302코드가 뜹니다.
+	});
+});
+
+router.get('/logout',function(req, res, next){
+	//기기마다 다른 세션이 저장되기 때문에 정확히 로그아웃 된다고 함
+	console.log("id : "+req.session.key);
+	req.session.destroy(function(err){ 
+		if(err) res.status(message.code(11)).json(message.json(11));
+		else res.status(message.code(0)).json(message.json(0));
+	});
+});
+
 router.get('/:id', function(req, res, next) {
+	console.log(req.session.key);
 	connection.query('select * from user where id = ?;',[req.params.id], function (error, cursor) {
 		if (error) res.status(message.code(11)).json(message.json(11));
 		
 		if (cursor.length > 0) {
 			res.status(message.code(0)).json(cursor[0]);
-		}else res.status(message.code(2)).json(message.json(2));
+		}else res.status(message.code(9)).json(message.json(9));
     });
 });
 
@@ -71,14 +106,14 @@ router.get('/:user_id/cosmetics',function(req, res, next){
 	        query += ' ORDER BY rate_num desc';
 	        query += " limit ?,20";
 			//page 시작 0 부터로 해놓았는데 오빠가 1부터가 편하다고 하시면 req.query.page-1로 변경할 것
-	        query_params.push(req.query.page*20);
+	        query_params.push((req.query.page-1)*20);
         }
 		
 		connection.query(query, query_params, function (error, cursor) {
 	        if (error == null){
 	            if (cursor.length > 0) {
 					callback(null, queryflag, cursor);
-				} else callback(2,null);
+				} else callback(9,null);
 	        } else callback(11,null);
 	    });
 	  },
@@ -124,7 +159,7 @@ router.get('/:user_id/cosmetics/:cosmetic_id', function(req, res, next) {
 		        
 				if(cursor.length > 0){
 					callback(null,cursor[0].rate_num);
-				}else callback(2,null);
+				}else callback(4,null);
 			});
 	    },
 	    function (rate_num, callback) {
@@ -134,7 +169,7 @@ router.get('/:user_id/cosmetics/:cosmetic_id', function(req, res, next) {
 				if(cursor.length > 0){
 					cursor[0].rate_num = rate_num;
 					callback(null,cursor[0]);
-				}else callback(2,null);
+				}else callback(4,null);
 			});
 		}
 	],
@@ -170,6 +205,12 @@ router.put('/:user_id/cosmetics/:cosmetic_id', function(req, res, next) {
 		if(query_params.length > 0) query += ' ,';
 		query += ' status = ?';
 	}
+	if(req.body.expiration_date){
+		flag = true;
+		query_params.push(req.body.expiration_date);
+		if(query_params.length > 0) query += ' ,';
+		query += ' expiration_date = ?';
+	}
 	
 	query += ' where user_id = ? and cosmetic_id = ?;';
 	query_params.push(req.params.user_id);
@@ -183,10 +224,22 @@ router.put('/:user_id/cosmetics/:cosmetic_id', function(req, res, next) {
 	
 	connection.query(query, query_params, function (error, info) {
         if (error == null){
-            res.status(message.code(2)).json(message.json(2));
+            res.status(message.code(0)).json(message.json(0));
         } else {
             res.status(message.code(11)).json(message.json(11));
  		}
+    });
+});
+
+router.delete('/:user_id/cosmetics/:cosmetic_id', function(req, res, next) {
+	if(req.params.user_id.length == 0 || req.params.cosmetic_id.length == 0){
+		res.status(message.code(4)).json(message.json(4)); return;
+	}
+	
+	connection.query('delete from dressing_table where user_id = ? and cosmetic_id = ? ;',[req.params.user_id, req.params.cosmetic_id], function (error, info) {
+        if (error == null) {
+           res.status(message.code(2)).json(message.json(2));
+        } else res.status(message.code(9)).json(message.json(9));
     });
 });
 
