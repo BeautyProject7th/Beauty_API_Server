@@ -11,24 +11,51 @@ var connection = mysql.createConnection({
     host : '13.112.190.217'
 });
 
-router.post('/login', function(req, res, next){	
+
+
+router.post('/login', function(req, res, next){
 	if (!req.session) {
-	    console.log('not connect session') // handle error 
-	    res.status(message.code(14)).json(message.json(14)); return;
+		console.log('not connect session') // handle error
+		res.status(message.code(14)).json(message.json(14)); return;
 	}
 	if(req.body.id.length == 0 || req.body.name.length == 0 || req.body.social_type == 0){
 		res.status(message.code(13)).json(message.json(13)); return;
 	}
-	
+
 	var query = 'insert into user(id, name, profile_url,social_type) values (?,?,?,?);';
 	var query_params = [req.body.id,req.body.name,req.body.profile_url,req.body.social_type];
 	console.log(query_params);
-	
-	//우선 회원 가입(post) 
+
+	//우선 회원 가입(post)
 	connection.query(query, query_params, function (error, info) {
 		if(error) console.log("기존 회원");
 		else console.log("새로운 회원");
-		
+
+		req.session.key = req.body.id;
+		console.log("id : "+req.session.key);
+		res.redirect('/users/'+req.body.id);
+		//redirect하게되면 302코드가 뜹니다.
+	});
+});
+
+router.post('/access', function(req, res, next){
+	if (!req.session) {
+		console.log('not connect session') // handle error
+		res.status(message.code(14)).json(message.json(14)); return;
+	}
+	if(req.body.id.length == 0){
+		res.status(message.code(13)).json(message.json(13)); return;
+	}
+
+	var query = 'select * from user where id = ?;';
+	var query_params = [req.body.id,req.body.name,req.body.profile_url,req.body.social_type];
+	console.log(query_params);
+
+	//우선 회원 가입(post)
+	connection.query(query, query_params, function (error, info) {
+		if(error) console.log("기존 회원");
+		else console.log("새로운 회원");
+
 		req.session.key = req.body.id;
 		console.log("id : "+req.session.key);
 		res.redirect('/users/'+req.body.id);
@@ -57,20 +84,19 @@ router.get('/:id', function(req, res, next) {
 });
 
 router.post('/:user_id/cosmetics', function(req, res, next) {
-	//status는 프로토타입 기능에 있지 않다.
 	if(req.params.user_id.length == 0){
-		res.status(message.code(4)).json(message.json(4)); return;
+		return res.status(message.code(4)).json(message.json(4));
 	}	
 	if(req.body.id.length == 0){
-		res.status(message.code(13)).json(message.json(13)); return;
+		return res.status(message.code(13)).json(message.json(13));
 	}	
 	var query = 'insert into dressing_table(user_id, cosmetic_id, rate_num, review, status) values (?, ?, ?, ?, ?);';
 	var query_params = [req.params.user_id, req.body.id, req.body.rate_num, req.body.review, req.body.status];
     connection.query(query, query_params, function (error, info) {
         if (error == null){
-            res.status(message.code(2)).json(message.json(2));
+            return res.status(message.code(1)).json(message.json(1));
         } else {
-            res.status(message.code(10)).json(message.json(10));		}
+            return res.status(message.code(10)).json(message.json(10));		}
     });
 });
 
@@ -111,7 +137,9 @@ router.get('/:user_id/cosmetics',function(req, res, next){
 		
 		connection.query(query, query_params, function (error, cursor) {
 	        if (error == null){
+
 	            if (cursor.length > 0) {
+					console.log("cursor.length : " + cursor.length);
 					callback(null, queryflag, cursor);
 				} else callback(9,null);
 	        } else callback(11,null);
@@ -158,16 +186,25 @@ router.get('/:user_id/cosmetics/:cosmetic_id', function(req, res, next) {
 		        if (error) callback(11, results);
 		        
 				if(cursor.length > 0){
-					callback(null,cursor[0].rate_num);
+					var temp = [];
+					temp.push(cursor[0].rate_num);
+					temp.push(cursor[0].review);
+					temp.push(cursor[0].status);
+					temp.push(cursor[0].expiration_date);
+
+					callback(null,temp);
 				}else callback(4,null);
 			});
 	    },
-	    function (rate_num, callback) {
+	    function (temp, callback) {
 		    connection.query('select * from cosmetic where id = ?;',[req.params.cosmetic_id], function (error, cursor) {
 			    if (error) callback(11, results);
 			    
 				if(cursor.length > 0){
-					cursor[0].rate_num = rate_num;
+					cursor[0].expiration_date = temp.pop();
+					cursor[0].status = temp.pop();
+					cursor[0].review = temp.pop();
+					cursor[0].rate_num = temp.pop();
 					callback(null,cursor[0]);
 				}else callback(4,null);
 			});
@@ -196,19 +233,22 @@ router.put('/:user_id/cosmetics/:cosmetic_id', function(req, res, next) {
 	if(req.body.review){
 		flag = true;
 		query_params.push(req.body.review);
-		if(query_params.length > 0) query += ' ,';
+		if(query_params.length > 1) query += ' ,';
 		query += ' review = ?';
 	}
-	if(req.body.status){
+	// if(req.body.status){
+	//안드로이드에서 status 0 으로 수정해서 post 날리면 !req.body.status 인걸로 인식하길래..
 		flag = true;
 		query_params.push(req.body.status);
-		if(query_params.length > 0) query += ' ,';
+		if(query_params.length > 1) query += ' ,';
 		query += ' status = ?';
-	}
+
+		console.log("req.body.status : " + req.body.status);
+	// }
 	if(req.body.expiration_date){
 		flag = true;
 		query_params.push(req.body.expiration_date);
-		if(query_params.length > 0) query += ' ,';
+		if(query_params.length > 1) query += ' ,';
 		query += ' expiration_date = ?';
 	}
 	
@@ -224,9 +264,9 @@ router.put('/:user_id/cosmetics/:cosmetic_id', function(req, res, next) {
 	
 	connection.query(query, query_params, function (error, info) {
         if (error == null){
-            res.status(message.code(0)).json(message.json(0));
+            return res.status(message.code(0)).json(message.json(0));
         } else {
-            res.status(message.code(11)).json(message.json(11));
+            return res.status(message.code(11)).json(message.json(11));
  		}
     });
 });
