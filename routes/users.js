@@ -11,61 +11,71 @@ var connection = mysql.createConnection({
     host : '13.112.190.217'
 });
 
-
-
 router.post('/login', function(req, res, next){
-	if (!req.session) {
-		console.log('not connect session') // handle error
-		res.status(message.code(14)).json(message.json(14)); return;
-	}
-	if(req.body.id.length == 0 || req.body.name.length == 0 || req.body.social_type == 0){
-		res.status(message.code(13)).json(message.json(13)); return;
-	}
+	console.log('-------------/login-------------');
+	console.log('<cookies>'); 
+	console.log(req.cookies);
+	console.log('sessionID : '+req.sessionID);
+	
+	async.waterfall([
+	  	function(callback){
+			if (!req.session) {
+				console.log('not connect session'); // handle error
+				callback(14,null);
+			}else{
+				if(req.cookies['connect.sid']){
+					console.log("쿠키있어");
+					callback(null, req.session.key);
+				}else{
+					console.log("쿠키없어");
+					
+					//body값 있는지 확인
+					if(req.body.id.length == 0 || req.body.name.length == 0 || req.body.social_type == 0){
+						callback(13,null);
+					}
+					
+					var query = 'insert into user(id, name, profile_url,social_type) values (?,?,?,?);';
+					var query_params = [req.body.id,req.body.name,req.body.profile_url,req.body.social_type];
+					
+					//회원 가입(post)
+					connection.query(query, query_params, function (error, info) {
+						if(error){
+							//errono가 1062면 중복이란 소리(이미 있단 소리)
+							if(erro.errono == 1062)
+								callback(10,null);
+							else
+								callback(11,null);
+						}
+						else{
+							console.log("새로운 회원");
+							callback(null, req.body.id);
+						}
+					});
+				}
+			}
+		},
+		function(id, callback){
+			console.log("id : "+id);
+			//유저 정보 찾기
+			connection.query('select * from user where id = ?;', id, function (error, cursor) {
+				if(error) callback(9,null);
+				else callback(null, cursor[0]);
+			});
 
-	var query = 'insert into user(id, name, profile_url,social_type) values (?,?,?,?);';
-	var query_params = [req.body.id,req.body.name,req.body.profile_url,req.body.social_type];
-	console.log(query_params);
-
-	//우선 회원 가입(post)
-	connection.query(query, query_params, function (error, info) {
-		if(error) console.log("기존 회원");
-		else console.log("새로운 회원");
-
-		req.session.key = req.body.id;
-		console.log("id : "+req.session.key);
-		res.redirect('/users/'+req.body.id);
-		//redirect하게되면 302코드가 뜹니다.
-	});
-});
-
-router.post('/access', function(req, res, next){
-	if (!req.session) {
-		console.log('not connect session') // handle error
-		res.status(message.code(14)).json(message.json(14)); return;
-	}
-	if(req.body.id.length == 0){
-		res.status(message.code(13)).json(message.json(13)); return;
-	}
-
-	var query = 'select * from user where id = ?;';
-	var query_params = [req.body.id,req.body.name,req.body.profile_url,req.body.social_type];
-	console.log(query_params);
-
-	//우선 회원 가입(post)
-	connection.query(query, query_params, function (error, info) {
-		if(error) console.log("기존 회원");
-		else console.log("새로운 회원");
-
-		req.session.key = req.body.id;
-		console.log("id : "+req.session.key);
-		res.redirect('/users/'+req.body.id);
-		//redirect하게되면 302코드가 뜹니다.
-	});
+		}
+	], function (err, results) {
+		if(err) res.status(message.code(err)).json(message.json(err));
+		else{
+			//세션은 매번 저장하는 것이 아니라 한번만 저장하는 것
+			req.session.key = req.body.id;
+			res.status(message.code(0)).json(results);
+		}
+	});	
 });
 
 router.get('/logout',function(req, res, next){
 	//기기마다 다른 세션이 저장되기 때문에 정확히 로그아웃 된다고 함
-	console.log("id : "+req.session.key);
+	console.log("get id : "+req.session.key);
 	req.session.destroy(function(err){ 
 		if(err) res.status(message.code(11)).json(message.json(11));
 		else res.status(message.code(0)).json(message.json(0));
@@ -73,7 +83,14 @@ router.get('/logout',function(req, res, next){
 });
 
 router.get('/:id', function(req, res, next) {
-	console.log(req.session.key);
+	console.log('-------------/:id-------------');
+	console.log('<cookies>'); 
+	console.log(req.cookies);
+	console.log('sessionID : '+req.sessionID);
+	console.log('<session>');
+	console.log(req.session);
+	if(req.session.key)
+		console.log("get id : "+req.session.key.toString());
 	connection.query('select * from user where id = ?;',[req.params.id], function (error, cursor) {
 		if (error) res.status(message.code(11)).json(message.json(11));
 		
@@ -84,6 +101,7 @@ router.get('/:id', function(req, res, next) {
 });
 
 router.post('/:user_id/cosmetics', function(req, res, next) {
+	
 	if(req.params.user_id.length == 0){
 		return res.status(message.code(4)).json(message.json(4));
 	}	
@@ -101,6 +119,14 @@ router.post('/:user_id/cosmetics', function(req, res, next) {
 });
 
 router.get('/:user_id/cosmetics',function(req, res, next){
+	
+	console.log('-------------/:user_id/cosmetics-------------');
+	console.log('<cookies>'); 
+	console.log(req.cookies);
+	console.log('sessionID : '+req.sessionID);
+	console.log('<session>');
+	console.log(req.session);
+	
 	if(req.params.user_id.length == 0){
 		res.status(message.code(4)).json(message.json(4)); return;
 	}
@@ -283,7 +309,12 @@ router.delete('/:user_id/cosmetics/:cosmetic_id', function(req, res, next) {
     });
 });
 
-router.get('/images/:filename', function(req, res) {
+router.get('/images/:filename', function(req, res) {	
+	
+	req.session.destroy(function(err){ 
+		if(err) res.status(message.code(14)).json(message.json(14));
+	});
+	
 	var filename = req.params.filename;
 	var img = fs.readFileSync('./public/images/users/' + filename);
 	res.writeHead(200, {'Content-Type': 'image/gif'});

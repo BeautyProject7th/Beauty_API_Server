@@ -22,26 +22,28 @@ app.set('view engine', 'jade');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(session({
-	store: new RedisStore({
-        host: "localhost",
-        port: 6379,
-        client: redis,
-        prefix : "session:",
-        db : 0,
-        resave : false
-    }),
-    secret: 'thakqbxl7',
-    cookie: {
-        maxAge: 1000 * 60 * 60 * 24 * 365 // 쿠키 1년 유지
-    }
-}));
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(session({
+    secret: '1@%24^%$3^*&98&^%$',
+	store: new RedisStore({
+        host: "localhost",
+        port: 6379,
+        client: redis,
+        prefix : "session:",
+        db : 0,
+    }),
+    saveUninitialized: true,//세션 아이디를 실제 사용하기전에는 발급하지 않음
+    resave: false, //세션 아이디를 접속할때마다 새롭게 발급하지 않음
+    cookie: {
+        maxAge: 1000 * 60 * 60 * 24 * 365 // 쿠키 1년 유지
+    }
+}));
+
 
 app.use('/category', category);
 app.use('/brand', brand);

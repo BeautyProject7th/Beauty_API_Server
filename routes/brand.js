@@ -21,6 +21,11 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/images/:filename', function(req, res) {
+	
+	req.session.destroy(function(err){ 
+		if(err) res.status(message.code(14)).json(message.json(14));
+	});
+	
     var filename = req.params.filename;
     var img = fs.readFileSync('./public/images/brand/' + filename);
     res.writeHead(200, {'Content-Type': 'image/gif'});

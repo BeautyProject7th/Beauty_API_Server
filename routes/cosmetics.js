@@ -2,6 +2,7 @@ const message = require('../message');
 var express = require('express');
 var mysql = require('mysql');
 var router = express.Router();
+require('date-utils');
 
 fs = require('fs');
 
@@ -73,12 +74,41 @@ router.get('/:cosmetic_id', function(req, res, next) {
 });
 
 router.get('/images/:filename', function(req, res) {
+	
+	req.session.destroy(function(err){ 
+		if(err) res.status(message.code(14)).json(message.json(14));
+	});
+	
+	console.log('-------------/login-------------');
+	console.log('<cookies>'); 
+	console.log(req.cookies);
+	console.log('sessionID : '+req.sessionID);
 	var filename = req.params.filename;
 	var img_num = filename.replace("cosmetics_","").replace(".jpg","")*1;
 
 	var img = fs.readFileSync('./public/images/cosmetics/' + parseInt(img_num/10000) +'/'+filename);
 	res.writeHead(200, {'Content-Type': 'image/gif'});
 	res.end(img, 'binary');
+});
+
+router.post('/request', function(req, res, next){
+	var userid =req.session.key;
+	if(userid == 0 || req.body.brand.length == 0 || req.body.cosmetic.length == 0){
+		res.status(message.code(13)).json(message.json(13)); return;
+	}
+
+	var now = new Date();
+	var query = 'insert into cosmetic_request(brand, cosmetic, user, request_date) values (?,?,?,?)';
+	var query_params = [req.body.brand,req.body.cosmetic,userid,now];
+	console.log(query_params);
+
+	connection.query(query, query_params, function (error, info) {
+		if (error){ 
+            res.status(message.code(10)).json(message.json(10));
+        }else{
+	        res.status(message.code(1)).json(message.json(1));
+        }
+	});
 });
 
 module.exports = router;
