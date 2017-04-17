@@ -93,13 +93,33 @@ router.get('/images/:filename', function(req, res) {
 
 router.post('/request', function(req, res, next){
 	var userid =req.session.key;
-	if(userid == 0 || req.body.brand.length == 0 || req.body.cosmetic.length == 0){
+	if(userid == 'undefined' || req.body.brand.length == 0 || req.body.cosmetic.length == 0){
 		res.status(message.code(13)).json(message.json(13)); return;
 	}
 
 	var now = new Date();
 	var query = 'insert into cosmetic_request(brand, cosmetic, user, request_date) values (?,?,?,?)';
 	var query_params = [req.body.brand,req.body.cosmetic,userid,now];
+	console.log(query_params);
+
+	connection.query(query, query_params, function (error, info) {
+		if (error){ 
+            res.status(message.code(10)).json(message.json(10));
+        }else{
+	        res.status(message.code(1)).json(message.json(1));
+        }
+	});
+});
+
+router.post('/report', function(req, res, next){
+	var userid =req.session.key;
+	if(userid == 'undefined' || req.body.cosmetic_id.length == 0 || req.body.problem.length == 0){
+		res.status(message.code(13)).json(message.json(13)); return;
+	}
+
+	var now = new Date();
+	var query = 'insert into cosmetic_report(cosmetic_id, problem, detail, user, report_date) values (?,?,?,?,?)';
+	var query_params = [req.body.cosmetic_id,req.body.problem,req.body.detail,userid,now];
 	console.log(query_params);
 
 	connection.query(query, query_params, function (error, info) {

@@ -11,6 +11,7 @@ var connection = mysql.createConnection({
     host : '13.112.190.217'
 });
 
+//
 router.post('/login', function(req, res, next){
 	console.log('-------------/login-------------');
 	console.log('<cookies>'); 
@@ -41,8 +42,10 @@ router.post('/login', function(req, res, next){
 					connection.query(query, query_params, function (error, info) {
 						if(error){
 							//errono가 1062면 중복이란 소리(이미 있단 소리)
-							if(erro.errono == 1062)
+							if(error.errono == 1062){
+								console.log("중복");
 								callback(10,null);
+							}
 							else
 								callback(11,null);
 						}
@@ -68,7 +71,7 @@ router.post('/login', function(req, res, next){
 		else{
 			//세션은 매번 저장하는 것이 아니라 한번만 저장하는 것
 			req.session.key = req.body.id;
-			res.status(message.code(0)).json(results);
+			res.status(message.code(1)).json(results);
 		}
 	});	
 });
