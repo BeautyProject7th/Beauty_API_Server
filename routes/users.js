@@ -17,6 +17,14 @@ router.post('/login', function(req, res, next){
 	console.log('<cookies>'); 
 	console.log(req.cookies);
 	console.log('sessionID : '+req.sessionID);
+	/*
+		어플에서 로그아웃 한 경우 세션값이 없어져서 다시 로그인 할때 세션으로 접근 가능하지만
+		어플을 삭제하고 다시 설치한 경우에는 세션이 바뀐다.
+		즉, 세션으로만 로그인 처리하는 방식은 로그아웃을 따로 하지 않고 재설치 한 경우 로그인이 되지 않는 문제 발생
+		하지만, 빠른 로그인 처리 및 기존 포맷을 사용하기 위해선 세션을 위한 로그인을 유지해야한다.
+		그래서 회원가입시 중복 문제가 발생한 경우가 회원가입은 했었지만, 세션 값이 바뀐 경우이므로
+		이 경우에는 세션을 새로 저장하는 방식으로 진행할 예정 ( 미해결 문제 : 기존 세션 데이터에 그대로 남아있음 )
+	*/
 	
 	async.waterfall([
 	  	function(callback){
@@ -41,10 +49,12 @@ router.post('/login', function(req, res, next){
 					//회원 가입(post)
 					connection.query(query, query_params, function (error, info) {
 						if(error){
-							//errono가 1062면 중복이란 소리(이미 있단 소리)
-							if(error.errono == 1062){
+							//errno가 1062면 중복이란 소리(이미 있단 소리)
+							console.log(error.errno);
+							if(error.errno == 1062){
 								console.log("중복");
-								callback(10,null);
+								//callback(10,null);
+								callback(null, req.body.id);
 							}
 							else
 								callback(11,null);
