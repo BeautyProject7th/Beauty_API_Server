@@ -39,12 +39,12 @@ router.post('/login', function(req, res, next){
 					console.log("쿠키없어");
 					
 					//body값 있는지 확인
-					if(req.body.id.length == 0 || req.body.name.length == 0 || req.body.social_type == 0){
+					if(req.body.id.length == 0 || req.body.name.length == 0 || req.body.social_type == 0 || req.body.push_token.length == 0){
 						callback(13,null);
 					}
 					
-					var query = 'insert into user(id, name, profile_url,social_type) values (?,?,?,?);';
-					var query_params = [req.body.id,req.body.name,req.body.profile_url,req.body.social_type];
+					var query = 'insert into user(id, name, profile_url,social_type,push_token) values (?,?,?,?,?);';
+					var query_params = [req.body.id,req.body.name,req.body.profile_url,req.body.social_type,req.body.push_token];
 					
 					//회원 가입(post)
 					connection.query(query, query_params, function (error, info) {

@@ -85,8 +85,9 @@ router.get('/images/:filename', function(req, res) {
 	console.log('sessionID : '+req.sessionID);
 	var filename = req.params.filename;
 	var img_num = filename.replace("cosmetics_","").replace(".jpg","")*1;
-
-	var img = fs.readFileSync('./public/images/cosmetics/' + parseInt(img_num/10000) +'/'+filename);
+	
+	console.log('file  : '+'./public/images/cosmetics/' + parseInt(img_num/1000) +'/'+filename);
+	var img = fs.readFileSync('./public/images/cosmetics/' + parseInt(img_num/1000) +'/'+filename);
 	res.writeHead(200, {'Content-Type': 'image/gif'});
 	res.end(img, 'binary');
 });
