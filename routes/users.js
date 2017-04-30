@@ -219,7 +219,7 @@ router.get('/:user_id/cosmetics/expiration_date', function(req, res, next) {
 		res.status(message.code(4)).json(message.json(4)); return;
 	}
 	
-	var query = 'select id, brand, main_category, sub_category, product_name, img_src, rate_num, expiration_date from cosmetic, dressing_table where id in( select cosmetic_id from BeautyProject.dressing_table where DATE(expiration_date) <= DATE( DATE_ADD( NOW() ,INTERVAL 30 DAY ) ) ) and cosmetic.id = cosmetic_id and user_id = ? ';
+	var query = 'select id, brand, main_category, sub_category, product_name, img_src, rate_num, expiration_date from cosmetic, dressing_table where id in( select cosmetic_id from BeautyProject.dressing_table where DATE(expiration_date) <= DATE( DATE_ADD( NOW() ,INTERVAL 30 DAY ) ) ) and cosmetic.id = cosmetic_id and user_id = ? order by expiration_date ASC';
 	connection.query(query,[req.params.user_id], function (error, cursor) {
 	    if (error){
 		    console.log(error);
