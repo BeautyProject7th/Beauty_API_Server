@@ -196,7 +196,7 @@ var task = cron.schedule('7 15 * * *', function() {
 */
 
 //일단 오후 6시 기준 ( 서버 시간과 9시간 차이 남 : 한국 - 서버 = 9시 )
-var task = cron.schedule('0 9 * * *', function() {
+var task = cron.schedule('32 16 * * *', function() {
   //1. 하루에 한번씩 ( 우선 저녁 6시 정도 )
   
   //나중에는 설정에서 날짜 설정할 수 있도록 하기

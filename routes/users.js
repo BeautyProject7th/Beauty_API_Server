@@ -14,20 +14,20 @@ var connection = mysql.createConnection({
 //
 router.post('/login', function(req, res, next){
 	console.log('-------------/login-------------');
-	console.log('<cookies>'); 
+	console.log('<cookies>');
 	console.log(req.cookies);
 	console.log('sessionID : '+req.sessionID);
 	/*
-		어플에서 로그아웃 한 경우 세션값이 없어져서 다시 로그인 할때 세션으로 접근 가능하지만
-		어플을 삭제하고 다시 설치한 경우에는 세션이 바뀐다.
-		즉, 세션으로만 로그인 처리하는 방식은 로그아웃을 따로 하지 않고 재설치 한 경우 로그인이 되지 않는 문제 발생
-		하지만, 빠른 로그인 처리 및 기존 포맷을 사용하기 위해선 세션을 위한 로그인을 유지해야한다.
-		그래서 회원가입시 중복 문제가 발생한 경우가 회원가입은 했었지만, 세션 값이 바뀐 경우이므로
-		이 경우에는 세션을 새로 저장하는 방식으로 진행할 예정 ( 미해결 문제 : 기존 세션 데이터에 그대로 남아있음 )
-	*/
-	
+	 어플에서 로그아웃 한 경우 세션값이 없어져서 다시 로그인 할때 세션으로 접근 가능하지만
+	 어플을 삭제하고 다시 설치한 경우에는 세션이 바뀐다.
+	 즉, 세션으로만 로그인 처리하는 방식은 로그아웃을 따로 하지 않고 재설치 한 경우 로그인이 되지 않는 문제 발생
+	 하지만, 빠른 로그인 처리 및 기존 포맷을 사용하기 위해선 세션을 위한 로그인을 유지해야한다.
+	 그래서 회원가입시 중복 문제가 발생한 경우가 회원가입은 했었지만, 세션 값이 바뀐 경우이므로
+	 이 경우에는 세션을 새로 저장하는 방식으로 진행할 예정 ( 미해결 문제 : 기존 세션 데이터에 그대로 남아있음 )
+	 */
+
 	async.waterfall([
-	  	function(callback){
+		function(callback){
 			if (!req.session) {
 				console.log('not connect session'); // handle error
 				callback(14,null);
@@ -37,15 +37,15 @@ router.post('/login', function(req, res, next){
 					callback(null, req.session.key);
 				}else{
 					console.log("쿠키없어");
-					
+
 					//body값 있는지 확인
 					if(req.body.id.length == 0 || req.body.name.length == 0 || req.body.social_type == 0 || req.body.push_token.length == 0){
 						callback(13,null);
 					}
-					
+
 					var query = 'insert into user(id, name, profile_url,social_type,push_token) values (?,?,?,?,?);';
 					var query_params = [req.body.id,req.body.name,req.body.profile_url,req.body.social_type,req.body.push_token];
-					
+
 					//회원 가입(post)
 					connection.query(query, query_params, function (error, info) {
 						if(error){
@@ -83,7 +83,7 @@ router.post('/login', function(req, res, next){
 			req.session.key = req.body.id;
 			res.status(message.code(1)).json(results);
 		}
-	});	
+	});
 });
 
 router.get('/logout',function(req, res, next){
@@ -214,6 +214,24 @@ router.get('/:user_id/cosmetics',function(req, res, next){
 	});	
 });
 
+router.get('/:user_id/cosmetics/expiration_date', function(req, res, next) {
+	if(req.params.user_id.length == 0){
+		res.status(message.code(4)).json(message.json(4)); return;
+	}
+	
+	var query = 'select id, brand, main_category, sub_category, product_name, img_src, rate_num, expiration_date from cosmetic, dressing_table where id in( select cosmetic_id from BeautyProject.dressing_table where DATE(expiration_date) <= DATE( DATE_ADD( NOW() ,INTERVAL 30 DAY ) ) ) and cosmetic.id = cosmetic_id and user_id = ? ';
+	connection.query(query,[req.params.user_id], function (error, cursor) {
+	    if (error){
+		    console.log(error);
+			return res.status(message.code(11)).json(message.json(11)); return;
+		}
+			    
+		if(cursor.length > 0){
+			res.status(message.code(0)).json(cursor);
+		}else res.status(message.code(9)).json(message.json(9));
+	});
+});
+
 router.get('/:user_id/cosmetics/:cosmetic_id', function(req, res, next) {
 	if(req.params.user_id.length == 0 || req.params.cosmetic_id.length == 0){
 		res.status(message.code(4)).json(message.json(4)); return;
@@ -332,6 +350,113 @@ router.get('/images/:filename', function(req, res) {
 	var img = fs.readFileSync('./public/images/users/' + filename);
 	res.writeHead(200, {'Content-Type': 'image/gif'});
 	res.end(img, 'binary');
+});
+
+
+
+
+
+//update skin_type
+router.put('/skin_type', function(req, res, next){
+	console.log('-------------/skin_type-------------');
+	var query = 'update user SET skin_type = ? WHERE id = ?';
+	var query_params = [req.body.skin_type,req.body.user_id];
+
+	//스킨타입 변경
+	connection.query(query, query_params, function (error, info) {
+		if(error){
+			console.log(error);
+			return res.status(message.code(10)).json(message.json(10));
+		}
+		else{
+			console.log(req.body.user_id +"님의 스킨타입이 "+ req.body.skin_type +"으로 변경 완료");
+			return res.status(message.code(1)).json(message.json(1));
+		}
+	});
+});
+
+//update skin_trouble
+router.put('/skin_trouble', function(req, res, next){
+	console.log('-------------/skin_trouble-------------');
+	var query = 'update user SET';
+	var query_params = [];
+
+	if(req.body.skin_trouble_1){
+		query += ' skin_trouble_1 = ?';
+		query_params.push(req.body.skin_trouble_1);
+	}
+	if(req.body.skin_trouble_2){
+		query += ',skin_trouble_2 = ?';
+		query_params.push(req.body.skin_trouble_2);
+	}
+	if(req.body.skin_trouble_3){
+		query += ',skin_trouble_3 = ?';
+		query_params.push(req.body.skin_trouble_3);
+	}
+	query += ' WHERE id = ?'
+	query_params.push(req.body.user_id);
+
+	console.log("query : " + query);
+	console.log("query_params : " + query_params);
+
+
+	//스킨트러블 변경
+	connection.query(query, query_params, function (error, info) {
+		if(error){
+			console.log(error);
+			return res.status(message.code(10)).json(message.json(10));
+		}
+		else{
+			console.log(req.body.user_id +"님의 피부 고민 변경 완료");
+			return res.status(message.code(1)).json(message.json(1));
+		}
+	});
+});
+
+
+//find user's list
+router.get('/find/:user_id', function(req, res, next){
+	console.log('-------------/find/:user_id-------------');
+	var query = "select * from user where id != ?";
+	var query_params = [req.params.user_id];
+
+	console.log(query);
+	console.log(query_params);
+
+
+	connection.query(query, query_params, function (error, info) {
+		if(error){
+			console.log(error);
+			return res.status(message.code(10)).json(message.json(10));
+		}
+		else{
+			//console.log(info);
+			return res.status(message.code(1)).json(info);
+		}
+	});
+});
+
+
+//find user's list search
+router.get('/find/:user_id/search/:search_keyword', function(req, res, next){
+	console.log('-------------/find/:user_id/search/:search_keyword-------------');
+	var query = "select * from user where (id != ? and name like ?)";
+	var query_params = [req.params.user_id, '%'+req.params.search_keyword+'%'];
+
+	console.log(query);
+	console.log(query_params);
+
+
+	connection.query(query, query_params, function (error, info) {
+		if(error){
+			console.log(error);
+			return res.status(message.code(10)).json(message.json(10));
+		}
+		else{
+			//console.log(info);
+			return res.status(message.code(1)).json(info);
+		}
+	});
 });
 
 module.exports = router;
