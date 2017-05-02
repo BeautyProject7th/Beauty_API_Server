@@ -378,9 +378,9 @@ router.put('/skin_type', function(req, res, next){
 //update skin_trouble
 router.put('/skin_trouble', function(req, res, next){
 	console.log('-------------/skin_trouble-------------');
-	var query = 'update user SET';
-	var query_params = [];
-
+	var query = 'update user SET  skin_trouble_1 = ?,skin_trouble_2 = ?,skin_trouble_3 = ? WHERE id = ?';
+	var query_params = [req.body.skin_trouble_1,req.body.skin_trouble_2,req.body.skin_trouble_3,req.body.user_id];
+/*
 	if(req.body.skin_trouble_1){
 		query += ' skin_trouble_1 = ?';
 		query_params.push(req.body.skin_trouble_1);
@@ -399,7 +399,7 @@ router.put('/skin_trouble', function(req, res, next){
 	console.log("query : " + query);
 	console.log("query_params : " + query_params);
 
-
+*/
 	//스킨트러블 변경
 	connection.query(query, query_params, function (error, info) {
 		if(error){
