@@ -214,12 +214,12 @@ router.get('/:user_id/cosmetics',function(req, res, next){
 	});	
 });
 
-router.get('/:user_id/cosmetics/expiration_date', function(req, res, next) {
+router.get('/:user_id/cosmetics/expiration_date', function(req, res, next) {	
 	if(req.params.user_id.length == 0){
 		res.status(message.code(4)).json(message.json(4)); return;
 	}
 	
-	var query = 'select id, brand, main_category, sub_category, product_name, img_src, rate_num, expiration_date from cosmetic, dressing_table where id in( select cosmetic_id from BeautyProject.dressing_table where DATE(expiration_date) <= DATE( DATE_ADD( NOW() ,INTERVAL 30 DAY ) ) ) and cosmetic.id = cosmetic_id and user_id = ? order by expiration_date ASC';
+	var query = 'select id, brand, main_category, sub_category, product_name, img_src, rate_num, expiration_date from cosmetic, dressing_table where id in( select cosmetic_id from BeautyProject.dressing_table where DATE(expiration_date) <= DATE( DATE_ADD( NOW() ,INTERVAL 30 DAY ) ) and status = true ) and cosmetic.id = cosmetic_id and user_id = ? order by expiration_date ASC';
 	connection.query(query,[req.params.user_id], function (error, cursor) {
 	    if (error){
 		    console.log(error);
@@ -380,26 +380,6 @@ router.put('/skin_trouble', function(req, res, next){
 	console.log('-------------/skin_trouble-------------');
 	var query = 'update user SET  skin_trouble_1 = ?,skin_trouble_2 = ?,skin_trouble_3 = ? WHERE id = ?';
 	var query_params = [req.body.skin_trouble_1,req.body.skin_trouble_2,req.body.skin_trouble_3,req.body.user_id];
-/*
-	if(req.body.skin_trouble_1){
-		query += ' skin_trouble_1 = ?';
-		query_params.push(req.body.skin_trouble_1);
-	}
-	if(req.body.skin_trouble_2){
-		query += ',skin_trouble_2 = ?';
-		query_params.push(req.body.skin_trouble_2);
-	}
-	if(req.body.skin_trouble_3){
-		query += ',skin_trouble_3 = ?';
-		query_params.push(req.body.skin_trouble_3);
-	}
-	query += ' WHERE id = ?'
-	query_params.push(req.body.user_id);
-
-	console.log("query : " + query);
-	console.log("query_params : " + query_params);
-
-*/
 	//스킨트러블 변경
 	connection.query(query, query_params, function (error, info) {
 		if(error){

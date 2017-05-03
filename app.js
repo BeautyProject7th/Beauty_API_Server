@@ -195,17 +195,10 @@ var task = cron.schedule('7 15 * * *', function() {
 });
 */
 
-//일단 오후 6시 기준 ( 서버 시간과 9시간 차이 남 : 한국 - 서버 = 9시 )
-var task = cron.schedule('32 16 * * *', function() {
-  //1. 하루에 한번씩 ( 우선 저녁 6시 정도 )
-  
-  //나중에는 설정에서 날짜 설정할 수 있도록 하기
-  //나는 당일이나 전날에 알려주면 된다는 생각을 했는데
-  //의견을 물어보니 2~3일 전에는 알려줘야 미리 구매한다는 의견도 있었음 그냥 다 설정하게 하는게 좋을 듯
-  
-  //우선은 내일이 유통기한 마지막날인 경우
-  //2. 일단 내일이 유통기한인 등록된 화장품들을 다 가져온다.
-  connection.query("select * from dressing_table where expiration_date = CURDATE() + INTERVAL 1 DAY", function (error, cursor) {
+var task = cron.schedule('50 17 * * *', function() {
+  //시간 설정가능하도록 구현할 것
+  //하루전에는 그냥 디폴트로
+  connection.query("select * from dressing_table where (expiration_date = CURDATE() + INTERVAL 7 DAY or expiration_date = CURDATE() + INTERVAL 1 DAY) and status = true", function (error, cursor) {
 		if (error){
 	        console.log("select expiration server error");
 	    }
@@ -217,6 +210,8 @@ var task = cron.schedule('32 16 * * *', function() {
 				console.log("cosmetic_id : "+cosmetic_id);
 				var user_id = cursor[i].user_id;
 				console.log("original user_id : "+user_id);
+				var date_str = String(cursor[i].expiration_date).substring(8, 10);
+				var expiration_date = parseInt(date_str);
 				
 				async.parallel([
 					function(callback){
@@ -238,22 +233,33 @@ var task = cron.schedule('32 16 * * *', function() {
 	            function(err,results){
 	                if(err) console.log(err);
 	                else{
-		                var cosmetic_name = results[1];
+		                
 		                var user_name = results[0][0];
 		                var user_token = results[0][1];
 						console.log("--------푸시보내보자-------");
-						console.log("cosmetic_name : "+cosmetic_name);
 						console.log("user_name : "+user_name);
 						console.log("user_token : "+user_token);
 						console.log("------------------------");
+						
+						//현재 날짜 가져오기
+						var today = new Date();
+						var today_date = String(today.getDate() + 1);
+						
+						var title_txt = "[메화] 유통기한 7일 전";
+		                //하루 전 일 경우
+		                console.log('today_date : '+today_date);
+		                console.log('expiration_date : '+expiration_date);
+						if(today_date==expiration_date){
+							title_txt = "[메화] 유통기한 1일 전";
+						}
 						
 						//5.보낼 메시지 설정
 						var message = { 
 							to: user_token, 
 							collapse_key: "score_update",
 							notification: { 
-								title: "[메화] 유통기한 1일 전", 
-								body: user_name+'님 유통기한이 하루 남은 제품이 있습니다.' 
+								title: title_txt, 
+								body: user_name+'님 유통기한이 다 되어가는 제품이 있습니다.'
 							} 
 						};
 						//6.푸시 보내기
@@ -273,4 +279,3 @@ var task = cron.schedule('32 16 * * *', function() {
 });
 
 task.start();
-
