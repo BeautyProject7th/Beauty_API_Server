@@ -195,7 +195,7 @@ var task = cron.schedule('7 15 * * *', function() {
 });
 */
 
-var task = cron.schedule('50 17 * * *', function() {
+var task = cron.schedule('57 23 * * *', function() {
   //시간 설정가능하도록 구현할 것
   //하루전에는 그냥 디폴트로
   connection.query("select * from dressing_table where (expiration_date = CURDATE() + INTERVAL 7 DAY or expiration_date = CURDATE() + INTERVAL 1 DAY) and status = true", function (error, cursor) {
@@ -215,31 +215,7 @@ var task = cron.schedule('50 17 * * *', function() {
 				
 				async.parallel([
 					function(callback){
-						console.log("second user_id : "+user_id);
-						connection.query("select * from user where id = ?", user_id, function (error, users) {
-							if (error){
-						        console.log("select user_name server error");
-							}
-							if (users.length > 0) {
-								var user_name = users[0].name;
-								var user_token = users[0].push_token;
-								console.log("user_name : "+user_name);
-								console.log("user_token : "+user_token);
-								callback(null,[user_name,user_token]);
-							}
-						});
-					}
-					],
-	            function(err,results){
-	                if(err) console.log(err);
-	                else{
-		                
-		                var user_name = results[0][0];
-		                var user_token = results[0][1];
-						console.log("--------푸시보내보자-------");
-						console.log("user_name : "+user_name);
-						console.log("user_token : "+user_token);
-						console.log("------------------------");
+						//유통기한 날짜 텍스트 보내기
 						
 						//현재 날짜 가져오기
 						var today = new Date();
@@ -253,14 +229,48 @@ var task = cron.schedule('50 17 * * *', function() {
 							title_txt = "[메화] 유통기한 1일 전";
 						}
 						
-						//5.보낼 메시지 설정
+						callback(null,title_txt);
+					},
+					function(callback){
+						console.log("second user_id : "+user_id);
+						console.log("second exp : "+expiration_date);
+						connection.query("select * from user where id = ?", user_id, function (error, users) {
+							if (error){
+						        console.log("select user_name server error");
+							}
+							if (users.length > 0) {
+								var user_name = users[0].name;
+								var user_token = users[0].push_token;
+								
+								console.log("user_name : "+user_name);
+								console.log("user_token : "+user_token);
+								callback(null,[user_name,user_token]);
+							}
+						});
+					}
+				],
+	            function(err,results){
+	                if(err) console.log(err);
+	                else{
+		                
+		                var user_name = results[1][0];
+		                var user_token = results[1][1];
+		                var title_txt = results[0];
+						console.log("--------푸시보내보자-------");
+						console.log("user_name : "+user_name);
+						console.log("user_token : "+user_token);
+						console.log("------------------------");
+						
+						//5.보낼 메시지 설정 ( data 넣은 이유 : data를 넣어야 비축소형이 되기 때문! )
 						var message = { 
 							to: user_token, 
-							collapse_key: "score_update",
 							notification: { 
 								title: title_txt, 
 								body: user_name+'님 유통기한이 다 되어가는 제품이 있습니다.'
-							} 
+							},
+							data: {
+								title: title_txt
+							}
 						};
 						//6.푸시 보내기
 						fcm.send(message, function(err, response){ 

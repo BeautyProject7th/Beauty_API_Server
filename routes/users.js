@@ -11,7 +11,6 @@ var connection = mysql.createConnection({
     host : '13.112.190.217'
 });
 
-//
 router.post('/login', function(req, res, next){
 	console.log('-------------/login-------------');
 	console.log('<cookies>');
@@ -435,6 +434,26 @@ router.get('/find/:user_id/search/:search_keyword', function(req, res, next){
 		else{
 			//console.log(info);
 			return res.status(message.code(1)).json(info);
+		}
+	});
+});
+
+//토큰값 보내기
+router.put('/token', function(req, res, next){
+	console.log('-------------/:user_id/token-------------');
+	var query = 'update user SET push_token = ? WHERE id = ?';
+	var query_params = [req.body.push_token,req.body.user_id];
+	connection.query(query, query_params, function (error, info) {
+		if(error){
+			console.log(error);
+			return res.status(message.code(11)).json(message.json(11));
+		}
+		else{
+			console.log("토큰값 재 저장 : "+req.body.push_token);
+			connection.query('select * from user where id = ?;', req.body.user_id, function (error, cursor) {
+				if(error) callback(11,null);
+				else return res.status(message.code(0)).json(cursor[0]);
+			});
 		}
 	});
 });
