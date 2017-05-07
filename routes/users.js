@@ -294,18 +294,26 @@ router.put('/:user_id/cosmetics/:cosmetic_id', function(req, res, next) {
 	}
 	// if(req.body.status){
 	//안드로이드에서 status 0 으로 수정해서 post 날리면 !req.body.status 인걸로 인식하길래..
+	/*
 		flag = true;
 		query_params.push(req.body.status);
 		if(query_params.length > 1) query += ' ,';
 		query += ' status = ?';
 
 		console.log("req.body.status : " + req.body.status);
+		*/
 	// }
 	if(req.body.expiration_date){
 		flag = true;
 		query_params.push(req.body.expiration_date);
 		if(query_params.length > 1) query += ' ,';
 		query += ' expiration_date = ?';
+	}
+	if(req.body.purchase_date){
+		flag = true;
+		query_params.push(req.body.purchase_date);
+		if(query_params.length > 1) query += ' ,';
+		query += ' purchase_date = ?';
 	}
 	
 	query += ' where user_id = ? and cosmetic_id = ?;';
