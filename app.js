@@ -9,6 +9,7 @@ var RedisStore = require('connect-redis')(session);
 //지금은 직접 켜야지만 가능 -> redis켜는법(필요할때만) 찾아볼 것
 var redis = require('redis').createClient(6379,'localhost');
 
+var deeplink = require('./routes/deeplink');
 var category = require('./routes/category');
 var brand = require('./routes/brand');
 var users = require('./routes/users');
@@ -49,6 +50,8 @@ app.use(session({
         maxAge: 1000 * 60 * 60 * 24 * 365 // 쿠키 1년 유지
     }
 }));
+
+app.use('/deeplink', deeplink);
 
 
 app.use('/category', category);

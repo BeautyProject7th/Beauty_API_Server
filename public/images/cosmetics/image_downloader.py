@@ -10,10 +10,10 @@ if __name__ == "__main__":
     print("Hello World")
     fields = ['brand', 'category_1', 'category_2', 'product_name', 'img_src']
 
-    df = pd.read_csv('./naver_final.csv', skipinitialspace=True, usecols=fields)
+    df = pd.read_csv('./naver_20170509.csv', skipinitialspace=True, usecols=fields)
     col_length = df.size/5
     col = 0
-    while col < 2965:
+    while col < 8206:
         if col % 1000 == 0 :
             path = "/home/ec2-user/mijeong/node/BeautyProject/public/images/cosmetics/" + str(col/1000)
             os.mkdir(path, 0755)

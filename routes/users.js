@@ -31,38 +31,50 @@ router.post('/login', function(req, res, next){
 				console.log('not connect session'); // handle error
 				callback(14,null);
 			}else{
-				if(req.cookies['connect.sid']){
-					console.log("쿠키있어");
-					callback(null, req.session.key);
-				}else{
-					console.log("쿠키없어");
-
-					//body값 있는지 확인
-					if(req.body.id.length == 0 || req.body.name.length == 0 || req.body.social_type == 0 || req.body.push_token.length == 0){
-						callback(13,null);
-					}
-
-					var query = 'insert into user(id, name, profile_url,social_type,push_token) values (?,?,?,?,?);';
-					var query_params = [req.body.id,req.body.name,req.body.profile_url,req.body.social_type,req.body.push_token];
-
-					//회원 가입(post)
-					connection.query(query, query_params, function (error, info) {
-						if(error){
-							//errno가 1062면 중복이란 소리(이미 있단 소리)
-							console.log(error.errno);
-							if(error.errno == 1062){
-								console.log("중복");
-								//callback(10,null);
+				if(!req.session.key){
+					console.log("session key : "+req.session.key);
+					//로그인 X
+					console.log("session key : 없음");
+					if(!req.body.id || !req.body.name || !req.body.social_type || !req.body.push_token){
+					//if(req.body.id == 0 || req.body.name == 0 || req.body.social_type == 0 || req.body.push_token == 0){
+						callback(8,null);
+					}else{
+						var query = 'insert into user(id, name, profile_url,social_type,push_token) values (?,?,?,?,?);';
+						var query_params = [req.body.id,req.body.name,req.body.profile_url,req.body.social_type,req.body.push_token];
+						
+						console.log("id : "+req.body.id);
+						console.log("name : "+req.body.name);
+						console.log("profile_url : "+req.body.profile_url);
+						console.log("social_type : "+req.body.social_type);
+						console.log("push_token : "+req.body.push_token);
+						//회원 가입(post)
+						connection.query(query, query_params, function (error, info) {
+							if(error){
+								//errno가 1062면 중복이란 소리(이미 있단 소리)
+								console.log("errno : "+error.errno);
+								if(error.errno == 1062){
+									console.log("중복");
+									//callback(10,null);
+									
+									//세션은 매번 저장하는 것이 아니라 한번만 저장하는 것
+									req.session.key = req.body.id;
+									callback(null, req.body.id);
+								}
+								else
+									callback(11,null);
+							}
+							else{
+								console.log("새로운 회원");
+								//세션은 매번 저장하는 것이 아니라 한번만 저장하는 것
+								req.session.key = req.body.id;
 								callback(null, req.body.id);
 							}
-							else
-								callback(11,null);
-						}
-						else{
-							console.log("새로운 회원");
-							callback(null, req.body.id);
-						}
-					});
+						});
+					}
+				}else{
+					console.log("session key : 이씀");
+					//자동로그인
+					callback(null, req.session.key);
 				}
 			}
 		},
@@ -78,8 +90,8 @@ router.post('/login', function(req, res, next){
 	], function (err, results) {
 		if(err) res.status(message.code(err)).json(message.json(err));
 		else{
-			//세션은 매번 저장하는 것이 아니라 한번만 저장하는 것
-			req.session.key = req.body.id;
+			console.log("result id : "+results.id);
+			console.log("result name : "+results.name);
 			res.status(message.code(1)).json(results);
 		}
 	});
@@ -247,6 +259,7 @@ router.get('/:user_id/cosmetics/:cosmetic_id', function(req, res, next) {
 					temp.push(cursor[0].review);
 					temp.push(cursor[0].status);
 					temp.push(cursor[0].expiration_date);
+					temp.push(cursor[0].purchase_date);
 
 					callback(null,temp);
 				}else callback(4,null);
@@ -257,6 +270,7 @@ router.get('/:user_id/cosmetics/:cosmetic_id', function(req, res, next) {
 			    if (error) callback(11, results);
 			    
 				if(cursor.length > 0){
+					cursor[0].purchase_date = temp.pop();
 					cursor[0].expiration_date = temp.pop();
 					cursor[0].status = temp.pop();
 					cursor[0].review = temp.pop();
@@ -359,9 +373,30 @@ router.get('/images/:filename', function(req, res) {
 	res.end(img, 'binary');
 });
 
+router.get('/images/skin_type/:filename', function(req, res) {
+
+	req.session.destroy(function(err){
+		if(err) res.status(message.code(14)).json(message.json(14));
+	});
+
+	var filename = req.params.filename;
+	var img = fs.readFileSync('./public/images/skin_type/' + filename);
+	res.writeHead(200, {'Content-Type': 'image/gif'});
+	res.end(img, 'binary');
+});
 
 
+router.get('/images/skin_trouble/:filename', function(req, res) {
 
+	req.session.destroy(function(err){
+		if(err) res.status(message.code(14)).json(message.json(14));
+	});
+
+	var filename = req.params.filename;
+	var img = fs.readFileSync('./public/images/skin_trouble/' + filename);
+	res.writeHead(200, {'Content-Type': 'image/gif'});
+	res.end(img, 'binary');
+});
 
 //update skin_type
 router.put('/skin_type', function(req, res, next){
@@ -450,7 +485,10 @@ router.get('/find/:user_id/search/:search_keyword', function(req, res, next){
 router.put('/token', function(req, res, next){
 	console.log('-------------/:user_id/token-------------');
 	var query = 'update user SET push_token = ? WHERE id = ?';
-	var query_params = [req.body.push_token,req.body.user_id];
+	var query_params = [req.body.push_token,req.body.id];
+	
+	console.log("id : "+req.body.id);
+	console.log("token : "+req.body.push_token);
 	connection.query(query, query_params, function (error, info) {
 		if(error){
 			console.log(error);
@@ -458,12 +496,181 @@ router.put('/token', function(req, res, next){
 		}
 		else{
 			console.log("토큰값 재 저장 : "+req.body.push_token);
-			connection.query('select * from user where id = ?;', req.body.user_id, function (error, cursor) {
-				if(error) callback(11,null);
+			res.status(message.code(1)).json(message.json(1));
+			/*
+			connection.query('select * from user where id = ?;', req.body.id, function (error, cursor) {
+				if(error) res.status(message.code(11)).json(message.json(11));
 				else return res.status(message.code(0)).json(cursor[0]);
 			});
+			*/
 		}
 	});
+});
+
+
+router.post('/follow/:follower_id/:followee_id', function(req, res, next) {
+	if(req.params.follower_id == null || req.params.followee_id == null){
+		return res.status(message.code(4)).json(message.json(4));
+	}
+
+	var query_check = "select * from follow where (follower_id = ? AND followee_id = ?);";
+	connection.query(query_check, [req.params.follower_id, req.params.followee_id], function (error, info) {
+		if (error == null){
+			if(info.length ==0){ //팔로우 아직 안된 상태
+				var now = new Date();
+				var query = 'insert into follow(follower_id, followee_id, date) values (?, ?, ?);';
+				var query_params = [req.params.follower_id, req.params.followee_id, now];
+				connection.query(query, query_params, function (error, info) {
+					if (error == null){
+						return res.status(message.code(1)).json(message.json(1));
+					} else {
+						return res.status(message.code(10)).json(message.json(10));
+					}
+				});
+			}else{ //팔로우 이미 되있는 상태
+				var query = "delete from follow where (follower_id = ? AND followee_id = ?);";
+				connection.query(query, [req.params.follower_id, req.params.followee_id], function (error, info) {
+					if (error == null){
+						return res.status(message.code(1)).json(message.json(3)); //deleted
+					} else {
+						return res.status(message.code(10)).json(message.json(10));
+					}
+				});
+			}
+		} else {
+
+		}
+	});
+});
+
+
+
+//유저리스트에서 내가 팔로윙하고있는 사람인지 확인하는 요청
+router.get('/follow/:follower_id/:followee_id', function(req, res, next) {
+	if(req.params.follower_id == null || req.params.followee_id == null){
+		return res.status(message.code(4)).json(message.json(4));
+	}
+
+	var query_check = "select * from follow where (follower_id = ? AND followee_id = ?);";
+	connection.query(query_check, [req.params.follower_id, req.params.followee_id], function (error, info) {
+		if (error == null){
+			if(info.length !=0 ){ //팔로우 이미 되있는 상태
+				return res.status(message.code(1)).json(message.json(10)); //이미 되있는 상태
+			}else {
+				return res.status(message.code(1)).json(message.json(2)); //아직 되있지않은 상태
+			}
+		} else {
+
+		}
+	});
+});
+
+
+//화장대 페이지에서 팔로윙 / 팔로워 각각 몇명인지만 확인하는 요청
+router.get('/follow_number/:user_id', function(req, res, next) {
+	if(req.params.user_id == null){
+		return res.status(message.code(4)).json(message.json(4));
+	}
+
+	var length = [];
+
+	var query_following = "select * from follow where follower_id = ?;";
+	connection.query(query_following, req.params.user_id, function (error, info) {
+		if (error == null){
+			//return res.status(message.code(1)).json(info.length); //이미 되있는 상태
+			length.push(info.length);
+		} else {
+			return res.status(message.code(10)).json(message.json(10)); //이미 되있는 상태
+		}
+	});
+
+	var query_followee = "select * from follow where followee_id = ?;";
+	connection.query(query_followee, req.params.user_id, function (error, info) {
+		if (error == null){
+			//return res.status(message.code(1)).json(info.length); //이미 되있는 상태
+			length.push(info.length);
+			console.log("length : " + length);
+			return res.status(message.code(1)).json(length);
+		} else {
+			return res.status(message.code(10)).json(message.json(10)); //이미 되있는 상태
+		}
+	});
+});
+
+//팔로잉 리스트
+router.get('/load/following/:user_id', function(req, res, next) {
+	if(req.params.user_id == null){
+		return res.status(message.code(4)).json(message.json(4));
+	}
+
+	var query = "select * from user where id in (select followee_id from follow where follower_id = ?);";
+	var query_params = req.params.user_id;
+
+	console.log(query);
+	console.log(query_params);
+
+
+	connection.query(query, query_params, function (error, info) {
+		if(error){
+			console.log(error);
+			return res.status(message.code(10)).json(message.json(10));
+		}
+		else{
+			return res.status(message.code(1)).json(info);
+		}
+	});
+});
+
+//팔로워 리스트
+router.get('/load/follower/:user_id', function(req, res, next) {
+	if(req.params.user_id == null){
+		return res.status(message.code(4)).json(message.json(4));
+	}
+
+	var query = "select * from user where id in (select follower_id from follow where followee_id = ?);";
+	var query_params = req.params.user_id;
+
+	console.log(query);
+	console.log(query_params);
+
+
+	connection.query(query, query_params, function (error, info) {
+		if(error){
+			console.log(error);
+			return res.status(message.code(9)).json(message.json(9));
+		}
+		else{
+			return res.status(message.code(1)).json(info);
+		}
+	});
+});
+
+
+//닉네임 중복체크
+router.get('/check/:name', function(req, res, next){
+	if(req.params.name == null) return res.status(message.code(4)).json(message.json(4));
+	
+	var query = "select * from user where name = ?;";
+	var query_params = req.params.name;
+	
+	connection.query(query, query_params, function (error, cursor) {
+		if (error) callback(11, results);
+		
+		if(cursor.length > 0){
+			res.status(message.code(10)).json(message.json(10));
+		}else{
+			res.status(message.code(0)).json(message.json(0));
+		}
+	});
+});
+
+
+router.post('/image/:filename', function(req, res, next) {
+  upload(req, res).then(function (file) {
+    res.json(file);
+  }, function (err) {
+    res.send(500, err);
+  });
 });
 
 module.exports = router;
