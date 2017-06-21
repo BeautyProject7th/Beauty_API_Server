@@ -14,6 +14,9 @@ var category = require('./routes/category');
 var brand = require('./routes/brand');
 var users = require('./routes/users');
 var cosmetics = require('./routes/cosmetics');
+var video = require('./routes/video')
+var youtuber = require('./routes/youtuber')
+
 
 //fcm
 var cron = require('node-cron');
@@ -58,6 +61,9 @@ app.use('/category', category);
 app.use('/brand', brand);
 app.use('/users', users);
 app.use('/cosmetics', cosmetics);
+app.use('/video', video);
+app.use('/youtuber', youtuber);
+
 
 app.use('/swagger-ui', express.static(path.join(__dirname, './node_modules/swagger-ui/dist')));
 app.use('/v1/swagger.json', function(req, res) {
@@ -79,7 +85,7 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  res.render('error');
+  //res.render('error');
 });
 
 module.exports = app;
@@ -88,6 +94,30 @@ app.listen(8888);
 
 console.log("port 8888 server running....");
 
+
+// 개인정보 취급방침
+app.get('/privacy_rule', function (req, res) {
+    fs.readFile('public/privacy_rule.html', function (error, data) {
+        if (error) {
+            console.log(error);
+        } else {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.end(data);
+        }
+    });
+});
+
+// 이용약관
+app.get('/agreement', function (req, res) {
+    fs.readFile('public/agreement.html', function (error, data) {
+        if (error) {
+            console.log(error);
+        } else {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.end(data);
+        }
+    });
+});
 
 /* fcm */
 
@@ -98,7 +128,7 @@ var connection = mysql.createConnection({
     user : 'root',
     password : '159753', 
     database : 'BeautyProject', 
-    host : '13.112.190.217'
+    host : '13.124.137.105'
 });
 
 

@@ -1,4 +1,4 @@
-import urllib
+import urllib.request
 import csv
 import pandas as pd
 import time
@@ -12,11 +12,12 @@ if __name__ == "__main__":
 
     df = pd.read_csv('./naver_20170509.csv', skipinitialspace=True, usecols=fields)
     col_length = df.size/5
-    col = 0
+    col = 1662
+    os.chdir("/home/ec2-user/Beauty_API_Server/public/images/cosmetics/1");
     while col < 8206:
         if col % 1000 == 0 :
-            path = "/home/ec2-user/mijeong/node/BeautyProject/public/images/cosmetics/" + str(col/1000)
-            os.mkdir(path, 0755)
+            path = "/home/ec2-user/Beauty_API_Server/public/images/cosmetics/" + str(int(col/1000))
+            os.mkdir(path)
             os.chdir(path);
         # if col % 10000 == 0 :
         #     path = "/home/ec2-user/mijeong/node/BeautyProject/public/image/cosmetics"
@@ -29,7 +30,12 @@ if __name__ == "__main__":
             continue
         print(col)
         print(df.img_src[col])
-        urllib.urlretrieve(df.img_src[col], "cosmetics_" + str(col) + ".jpg")
+        try:
+            urllib.request.urlretrieve(df.img_src[col], "cosmetics_" + str(col) + ".jpg")
+        except urllib.error.HTTPError as e:
+            print(str(col) + " HTTPError error")
+        except ValueError as e:
+            print(str(col) + " valueError error")
         #print str(col) + "/" + str(col_length)
         col+=1
         time.sleep(1)

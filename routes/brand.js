@@ -11,7 +11,7 @@ var connection = mysql.createConnection({
 });
 
 router.get('/', function(req, res, next) {
-	connection.query('select * from brand;', function (error, cursor) {
+	connection.query('select * from brand  order by important DESC;', function (error, cursor) {
 		if (error) res.status(message.code(11)).json(message.json(11));
 		
 		if (cursor.length > 0) {
@@ -27,9 +27,29 @@ router.get('/images/:filename', function(req, res) {
 	});
 	
     var filename = req.params.filename;
-    var img = fs.readFileSync('./public/images/brand/' + filename);
+    try {
+        var img = fs.readFileSync('./public/images/brand/' + filename);
+    } catch (err) {
+        if (err.code !== 'ENOENT')
+            throw err;
+
+    }
     res.writeHead(200, {'Content-Type': 'image/gif'});
     res.end(img, 'binary');
+});
+
+
+router.get('/search/:keyword', function(req, res, next){
+    var query = "select * from brand where name like ?";
+    var query_params = ['%'+req.params.keyword+'%'];
+    connection.query(query, query_params, function (error, info) {
+        if (error){
+            console.log(error);
+            res.status(message.code(10)).json(message.json(10));
+        }else{
+            res.status(message.code(1)).json(info);
+        }
+    });
 });
 
 module.exports = router;
