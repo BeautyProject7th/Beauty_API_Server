@@ -7,11 +7,11 @@ var connection = mysql.createConnection({
     user : 'root',
     password : '159753', 
     database : 'BeautyProject', 
-    host : '13.112.190.217'
+    host : 'localhost'
 });
 
 router.get('/', function(req, res, next) {
-	connection.query('select * from brand  order by important DESC;', function (error, cursor) {
+	connection.query('select * from brand order by important desc;', function (error, cursor) {
 		if (error) res.status(message.code(11)).json(message.json(11));
 		
 		if (cursor.length > 0) {

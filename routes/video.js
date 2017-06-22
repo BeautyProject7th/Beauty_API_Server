@@ -19,7 +19,7 @@ var accessKey = "f_PRhA427occkummIefOwe7JuZifKS2AM-VuLBRA4B9-ry8b_Ce8kPF_agGsCBB
 router.get('/search/:keyword', function(req, res, next){
     //var query = "SELECT * FROM video where description like ? limit 3;";
     //select * from youtuber where name COLLATE utf8_unicode_ci in (select youtuber_name from video where description like "%c%" );
-    var query = "select video.*, youtuber.profile_url, youtuber.skin_type, youtuber.skin_trouble_1, youtuber.skin_trouble_2, youtuber.skin_trouble_3 from video join youtuber on video.youtuber_name = youtuber.name COLLATE utf8_unicode_ci where description like ? LIMIT 1";
+    var query = "select video.*, youtuber.profile_url, youtuber.skin_type, youtuber.skin_trouble_1, youtuber.skin_trouble_2, youtuber.skin_trouble_3 from video join youtuber on video.youtuber_name = youtuber.name COLLATE utf8_unicode_ci where description like ? LIMIT 10";
     var query_params = ['%'+req.params.keyword+'%'];
     console.log(query);
     console.log(query_params);
@@ -91,6 +91,7 @@ router.get('/cosmetics/:video_id', function(req, res, next){
             if(cursor.length>0){
 	            console.log(cursor[0].product_name);
 	            res.status(message.code(0)).json(cursor);
+	            
             }else{
 	            res.status(message.code(11)).json(message.json(11));
             }
@@ -127,8 +128,10 @@ router.get('/images/:filename', function(req, res) {
 });
 
 
-var getVideo = function(video_title,recommanded_video_list, callback) {
-  connection.query("select * from video where title = ?",[video_title], function (error, cursor) {
+var getVideo = function(video_title,recommanded_video_list, num, callback) {
+	var query = "select video.*, youtuber.profile_url, youtuber.skin_type, youtuber.skin_trouble_1, youtuber.skin_trouble_2, youtuber.skin_trouble_3 from video join youtuber on video.youtuber_name = youtuber.name COLLATE utf8_unicode_ci where video.title = ?";
+	//var query2 = "select * from video where title = ?";
+  connection.query(query,[video_title], function (error, cursor) {
 				  console.log("mysql에서 찾자 : "+video_title);
 				  
 				  if(video_title == null) callback(null);
@@ -137,7 +140,7 @@ var getVideo = function(video_title,recommanded_video_list, callback) {
 						console.log("error : mysql server error");
 			        }
 			        
-					if (cursor.length > 0) {
+					if (cursor.length > 0 && recommanded_video_list.length<num) {
 						console.log(" mysql에서 찾았다 : "+cursor[0].title);
 						recommanded_video_list.push(cursor[0]);
 						
@@ -160,7 +163,7 @@ router.get('/recommend/:user_id', function(req, res, next) {
 	//TODO : 지금은 랭킹이 아니라 추천임! (랭킹으로 바꿀 것)
   	unirest.post('http://13.124.137.105:8000/queries.json')
 	.headers({'Accept': 'application/json', 'Content-Type': 'application/json;charset=UTF-8'})
-	.send({'user': req.params.user_id, 'num': 2, 'item_type': 'content'})
+	.send({'user': req.params.user_id, 'num': 10, 'item_type': 'content'})
 	.end(function (response) {
 	  console.log(response.body);
 		if(response){
@@ -169,7 +172,7 @@ router.get('/recommend/:user_id', function(req, res, next) {
 				var video_title = null;
 				if(i<itemScores.length) video_title = itemScores[i].item;
 				
-				getVideo(video_title,recommanded_video_list, function(result){
+				getVideo(video_title,recommanded_video_list,2, function(result){
 					if(result == null){
 						console.log("끝");
 						res.status(message.code(0)).json(recommanded_video_list);
@@ -192,7 +195,7 @@ router.get('/recommend/cosmetic/:cosmetic/:user_id', function(req, res, next) {
 	//TODO : 지금은 랭킹이 아니라 추천임! (랭킹으로 바꿀 것)
   	unirest.post('http://13.124.137.105:8000/queries.json')
 	.headers({'Accept': 'application/json', 'Content-Type': 'application/json;charset=UTF-8'})
-	.send({'user': req.params.user_id, 'num': 10, 'item_type': "content", 'cosmetic': req.params.cosmetic })
+	.send({'user': req.params.user_id, 'num': 20, 'item_type': "content", 'cosmetic': req.params.cosmetic })
 	.end(function (response) {
 		
 		console.log(response.body);
@@ -204,7 +207,7 @@ router.get('/recommend/cosmetic/:cosmetic/:user_id', function(req, res, next) {
 					var video_title = null;
 					if(i<itemScores.length) video_title = itemScores[i].item;
 					
-					getVideo(video_title,recommanded_video_list, function(result){
+					getVideo(video_title,recommanded_video_list,10, function(result){
 						if(result == null){
 							console.log("끝");
 							res.status(message.code(0)).json(recommanded_video_list);
@@ -224,7 +227,7 @@ router.get('/recommend/cosmetic/:cosmetic/:user_id', function(req, res, next) {
 							var video_title = null;
 							if(i<itemScores.length) video_title = itemScores[i].item;
 							
-							getVideo(video_title,recommanded_video_list, function(result){
+							getVideo(video_title,recommanded_video_list,10, function(result){
 								if(result == null){
 									console.log("끝");
 									res.status(message.code(0)).json(recommanded_video_list);
@@ -251,7 +254,7 @@ router.get('/search2/:user_id/:query', function(req, res, next) {
 	
   	unirest.post('http://13.124.137.105:8000/queries.json')
 	.headers({'Accept': 'application/json', 'Content-Type': 'application/json;charset=UTF-8'})
-	.send({'user': req.params.user_id, 'num': 10, 'item_type': 'content', 'search': req.params.query })
+	.send({'user': req.params.user_id, 'num': 20, 'item_type': 'content', 'search': req.params.query })
 	.end(function (response) {
 	  console.log(response.body);
 		if(response){
@@ -260,7 +263,7 @@ router.get('/search2/:user_id/:query', function(req, res, next) {
 				var video_title = null;
 				if(i<itemScores.length) video_title = itemScores[i].item;
 				
-				getVideo(video_title,recommanded_video_list, function(result){
+				getVideo(video_title,recommanded_video_list,20, function(result){
 					if(result == null){
 						console.log("끝");
 						res.status(message.code(0)).json(recommanded_video_list);

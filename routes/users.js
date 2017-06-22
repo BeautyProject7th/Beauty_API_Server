@@ -6,6 +6,13 @@ var router = express.Router();
 var async = require("async");
 var unirest = require('unirest');
 
+const imageRepoPath = './public/images/camera';
+const multer = require('multer');
+const uploader = multer({ dest: imageRepoPath });
+
+const util = require('util');
+
+
 var connection = mysql.createConnection({
     user : 'root',
     password : '159753', 
@@ -62,27 +69,31 @@ router.post('/login', function(req, res, next){
 									
 									//세션은 매번 저장하는 것이 아니라 한번만 저장하는 것
 									req.session.key = req.body.id;
-									callback(null, req.body.id);
+									
+									unirest.post('http://localhost:7070/events.json?accessKey='+accessKey)
+									.headers({'Accept': 'application/json', 'Content-Type': 'application/json;charset=UTF-8'})
+									.send({'event': '$set', 
+										'entityType': 'user', 
+										'entityId': req.body.id,
+										'eventTime': new Date().toISOString()})
+									.end(function (response) {
+									  if(response){
+									    	console.log(response.body);
+											callback(null, req.body.id);
+									  }
+								      else{
+								            console.log("pio 생성 실패");
+									      callback(11,null);
+								      }
+								
+									});
+									//callback(null, req.body.id);
 								}
 								else
 									callback(11,null);
 							}
 							else{
 								console.log("새로운 회원");
-								
-								unirest.post('http://localhost:7070/events.json?accessKey='+accessKey)
-								.headers({'Accept': 'application/json', 'Content-Type': 'application/json;charset=UTF-8'})
-								.send({'event': '$set', 
-									'entityType': 'user', 
-									'entityId': req.body.id, 
-									'eventTime': new Date().toISOString()})
-								.end(function (response) {
-								  if(response)
-								    	console.log(response.body);
-							      else
-							            console.log("pio 생성 실패");
-							
-								});
 								
 								//세션은 매번 저장하는 것이 아니라 한번만 저장하는 것
 								req.session.key = req.body.id;
@@ -1497,6 +1508,88 @@ router.put('/status/cosmetic/:user_id/:cosmetic_id', function(req, res, next) {
 			res.status(message.code(10)).json(message.json(10));
 		}
 	});
+});
+
+
+
+router.post('/:user_id/image/upload', uploader.single('post_image'), function(req, res, next) {
+	console.log("req.file.filename : " + req.file.filename);
+    console.log("req.params.user_id : " + req.params.user_id);
+
+    // console.log(util.inspect(req.file, false, null));
+
+    if (!req.params.user_id){
+        return res.status(message.code(3)).json(message.json(3));
+	}
+    var query = "insert into user_camera set id = default, user_id = ?, image_path = ?;";
+    connection.query(query, [req.params.user_id, req.file.filename], function (error, info) {
+        if (error == null){
+            res.status(message.code(0)).json(message.json(0));
+        } else {
+            console.log(error);
+            res.status(message.code(10)).json(message.json(10));
+        }
+    });
+});
+
+
+
+
+router.get('/camera/image/:user_id', function(req, res, next) {
+    if(req.params.user_id == null){
+        res.status(message.code(4)).json(message.json(4));
+    }
+    var query = "select image_path from user_camera where user_id = ? order by id desc;";
+    connection.query(query, [req.params.user_id], function (error, info) {
+        if (error == null){
+        	console.log(info[0].image_path);
+        	var temp = [];
+        	temp.push(info[0].image_path);
+            res.status(message.code(0)).json(temp);
+        } else {
+            res.status(message.code(10)).json(info);
+        }
+    });
+});
+
+
+router.get('/camera/images/:filename', function(req, res) {
+
+    req.session.destroy(function(err){
+        if(err) res.status(message.code(14)).json(message.json(14));
+    });
+
+    console.log("img1 : ");
+    try {
+        var img = fs.readFileSync('./public/images/camera/' + req.params.filename);
+    } catch (err) {
+        if (err.code !== 'ENOENT')
+            throw err;
+
+    }
+
+    res.writeHead(200, {'Content-Type': 'image/gif'});
+    res.end(img, 'binary');
+});
+
+
+//youtuber 랜덤하게 뽑아주기.
+//-> 영상인식 구현되면, 내 얼굴과 유사일치도에 따라 youtuber_id 추천해줄거임. 그럼 그걸 params.youtuber_id로 받아서 "select * from youtuber id = req.params.youtuber_id"
+router.get('/get_creator_camera/:user_id', function(req, res){
+	if(req.params.user_id == null){
+        res.status(message.code(4)).json(message.json(4));
+	}
+
+	//var query = "select * from youtuber id = ?";
+    var query = "SELECT *, FLOOR(RAND()*20) as count FROM youtuber order by count desc;"; //20은 youtuber가 지금 20명이라서
+    connection.query(query, function (error, info) {
+        if (error == null){
+            res.status(message.code(0)).json(info);
+        } else {
+        	console.log(error)
+            res.status(message.code(10)).json(message.json(10));
+        }
+    });
 });
 
 module.exports = router;

@@ -156,25 +156,33 @@ router.get('/rank', function(req, res, next){
 
 
 router.get('/dressing_table/rank', function(req, res, next){
-	var query = 'select followee_id, count(followee_id) AS count from follow group by followee_id order by count desc limit 3';
+	//var query = 'select followee_id, count(followee_id) AS count from follow group by followee_id order by count desc limit 3';
+    var query = "select user.*, count('cosmetic_id') AS count from dressing_table join user on dressing_table.user_id = user.id group by user_id order by count desc limit 3";
+
 	connection.query(query, function (error, info) {
 		if (error){
 			console.log(error);
 			res.status(message.code(10)).json(message.json(10));
 		}else{
 			//console.log(info[0].followee_id + " " + info[1].followee_id + " " + info[2].followee_id)
-			query = 'select * from user where (id = ? or id = ? or id = ?)'
-			var query_params = [info[0].followee_id, info[1].followee_id, info[2].followee_id];
+			//query = 'select * from user where (id = ? or id = ? or id = ?)'
+			//var query_params = [info[0].followee_id, info[1].followee_id, info[2].followee_id];
 
-			connection.query(query, query_params, function (error, info) {
-				if (error){
-					console.log(error);
-					res.status(message.code(10)).json(message.json(10));
-				}else{
-					//console.log(info);
-					res.status(message.code(1)).json(info);
-				}
-			});
+            res.status(message.code(1)).json(info);
+            //
+            // query = 'select * from user where (id = ? or id = ? or id = ?)'
+            // var query_params = [info[0].user_id, info[1].user_id, info[2].user_id];
+			// connection.query(query, query_params, function (error, info) {
+			// 	if (error){
+			// 		console.log(error);
+			// 		res.status(message.code(10)).json(message.json(10));
+			// 	}else{
+			// 		//console.log(info);
+			// 		res.status(message.code(1)).json(info);
+			// 	}
+			// });
+
+
 			//res.status(message.code(1)).json(info);
 		}
 	});

@@ -119,6 +119,7 @@ app.get('/agreement', function (req, res) {
     });
 });
 
+
 /* fcm */
 
 var serverKey = 'AAAAiF04B24:APA91bHVabupccjcuHjmah4iaOwY2TfBdk10LbgdRQT9WEkEAyIY60FZUWIMQ4X6TKguvP3YsWI3aGJMhgGuPGtmd1HMZJxhAeO3ui0GWEFkpUP-f8-uYMu7E0lVqNlBssKbnU9YHvQK '; 

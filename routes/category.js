@@ -7,7 +7,7 @@ var connection = mysql.createConnection({
     user : 'root',
     password : '159753', 
     database : 'BeautyProject', 
-    host : '13.112.190.217'
+    host : 'localhost'
 });
 
 router.get('/', function(req, res, next) {
